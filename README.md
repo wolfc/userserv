@@ -1,3 +1,13 @@
+Building
+========
+
+# yum install gcc libpurple-devel glib2-devel
+
+Enabling
+========
+
+Enable the plugin via Tools -> Plugins (Ctrl-U).
+
 SELinux
 =======
 
