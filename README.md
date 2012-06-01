@@ -12,4 +12,5 @@ SELinux
 =======
 
 chcon -t textrel_shlib_t '/home/carlo/.purple/plugins/userserv.so'
+
 sudo semanage fcontext -a -t textrel_shlib_t '/home/carlo/.purple/plugins/userserv.so'

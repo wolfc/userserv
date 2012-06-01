@@ -15,8 +15,8 @@ signed_on(PurpleConnection *connection)
 {
     PurpleAccount *account;
     const char *username;
-    const char *server;
     const char *password;
+    gchar **usernameTokens;
     gchar *msg;
 
     account = purple_connection_get_account(connection);
@@ -24,29 +24,24 @@ signed_on(PurpleConnection *connection)
     if(strcmp("prpl-irc", purple_account_get_protocol_id(account)))
         return;
 
-    username = purple_account_get_username(account);
-
-    server = g_strrstr(username, "@");
-
-    if(strcmp("@irc.devel.redhat.com", server))
-        return;
-
     password = purple_account_get_password(account);
 
     if(password == NULL)
         return;
 
-    // TODO: get the short username
-    msg = g_strdup_printf("PRIVMSG USERSERV :login carlo %s\r\n", password);
-    purple_debug_info("userserv", "sending %s\n", msg);
-    irc_info->send_raw(connection, msg, strlen(msg));
-    g_free(msg);
-/*
-    msg = g_strdup_printf("PRIVMSG wolfc :login carlo xxx\r\n");
-    purple_debug_info("userserv", "sending %s\n", msg);
-    irc_info->send_raw(connection, msg, strlen(msg));
-    g_free(msg);
-*/
+    username = purple_account_get_username(account);
+
+    usernameTokens = g_strsplit(username, "@", 2);
+
+    if(!strcmp("irc.devel.redhat.com", usernameTokens[1]))
+    {
+        msg = g_strdup_printf("PRIVMSG USERSERV :login %s %s\r\n", usernameTokens[0], password);
+        purple_debug_info("userserv", "sending %s\n", msg);
+        irc_info->send_raw(connection, msg, strlen(msg));
+        g_free(msg);
+    }
+
+    g_strfreev(usernameTokens);
 }
 
 static gboolean
