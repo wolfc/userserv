@@ -63,7 +63,7 @@ plugin_load(PurplePlugin *plugin)
     gc_handle = purple_connections_get_handle();
 
     // add configuration options if needed
-    option = purple_account_option_bool_new("enable userserv auth", PLUGIN_ID "_userserv_auth", 0);
+    option = purple_account_option_bool_new("Enable USERSERV Auth", PLUGIN_ID "_userserv_auth", 0);
     irc_info->protocol_options = g_list_append(irc_info->protocol_options, option);
     /*
     option = purple_account_option_string_new("userserv auth name", PLUGIN_ID "_usauthnick", "");
