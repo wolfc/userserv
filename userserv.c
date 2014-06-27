@@ -1,12 +1,15 @@
 #include <string.h>
 
+#include <accountopt.h>
 #include <debug.h>
 #include <plugin.h>
+#include <pluginpref.h>
+#include <prefs.h>
 #include <prpl.h>
 #include <version.h>
 
 #define PLUGIN_ID   "userserv"
-#define VERSION     "0.1"
+#define VERSION     "0.2"
 
 static PurplePluginProtocolInfo *irc_info = NULL;
 
@@ -33,7 +36,7 @@ signed_on(PurpleConnection *connection)
 
     usernameTokens = g_strsplit(username, "@", 2);
 
-    if(!strcmp("irc.devel.redhat.com", usernameTokens[1]))
+    if(purple_account_get_bool(account, PLUGIN_ID "_userserv_auth", 0))
     {
         msg = g_strdup_printf("PRIVMSG USERSERV :login %s %s\r\n", usernameTokens[0], password);
         purple_debug_info("userserv", "sending %s\n", msg);
@@ -48,6 +51,7 @@ static gboolean
 plugin_load(PurplePlugin *plugin)
 {
     PurplePlugin *prpl;
+    PurpleAccountOption *option;
     void *gc_handle;
 
     prpl = purple_find_prpl("prpl-irc");
@@ -58,6 +62,18 @@ plugin_load(PurplePlugin *plugin)
 
     gc_handle = purple_connections_get_handle();
 
+    // add configuration options if needed
+    option = purple_account_option_bool_new("enable userserv auth", PLUGIN_ID "_userserv_auth", 0);
+    irc_info->protocol_options = g_list_append(irc_info->protocol_options, option);
+    /*
+    option = purple_account_option_string_new("userserv auth name", PLUGIN_ID "_usauthnick", "");
+    irc_info->protocol_options = g_list_append(irc_info->protocol_options, option);
+    option = purple_account_option_string_new("userserv password", PLUGIN_ID "_usnickpassword", "");
+    purple_account_option_string_set_masked(option, TRUE);
+    irc_info->protocol_options = g_list_append(irc_info->protocol_options, option);
+    */
+
+    // register callbacks
     purple_signal_connect(gc_handle, "signed-on", plugin,
         G_CALLBACK(signed_on), NULL);
 
@@ -67,6 +83,42 @@ plugin_load(PurplePlugin *plugin)
 static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
+    PurplePlugin *prpl;
+    PurpleAccountOption *option;
+    GList *list;
+
+    prpl = purple_find_prpl("prpl-irc");
+    if(!prpl)
+        return FALSE;
+
+    irc_info = PURPLE_PLUGIN_PROTOCOL_INFO(prpl);
+
+    // remove configuration options
+    list = irc_info->protocol_options;
+    while (NULL != list)
+    {
+        option = (PurpleAccountOption *) list->data;
+        if (g_str_has_prefix(purple_account_option_get_setting(option), PLUGIN_ID "_"))
+        {
+            GList *tmplist = list;
+            // Remove from list.
+            if (tmplist->prev)
+                tmplist->prev->next = tmplist->next;
+            if (tmplist->next)
+                tmplist->next->prev = tmplist->prev;
+
+            // free allocations
+            purple_account_option_destroy(option);
+            g_list_free_1(tmplist);
+
+            list = g_list_next(list);
+        }
+        else
+        {
+            list = g_list_next(list);
+        }
+    }
+
     return TRUE;
 }
 
