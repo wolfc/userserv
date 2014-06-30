@@ -1,7 +1,7 @@
 Building
 ========
 
-# yum install gcc libpurple-devel glib2-devel
+    # yum install gcc libpurple-devel glib2-devel
 
 Enabling
 ========
